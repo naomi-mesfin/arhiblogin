@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login</title>
+  <style>
+    /* Minimal, modern centered form */
+    :root{
+      --bg:#000000;
+      --card:#ffffff;
+      --accent:#228B22;
+      --radius:12px;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    body{
+      margin:0;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(180deg,var(--bg),#000000);
+      padding:24px;
+    }
+    .card{
+      width:100%;
+      max-width:420px;
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow: 0 8px 30px rgba(11,99,212,0.08);
+      padding:28px;
+      box-sizing:border-box;
+    }
+    h1{margin:0 0 8px;font-size:1.25rem}
+    p.lead{margin:0 0 20px;color:var(--muted);font-size:0.95rem}
+    .field{margin-bottom:14px;display:flex;flex-direction:column;gap:6px}
+    label{font-size:0.9rem;color:#111827}
+    input[type="text"], input[type="password"], input[type="email"]{
+      padding:10px 12px;
+      font-size:1rem;
+      border-radius:8px;
+      border:1px solid #d1d5db;
+      outline: none;
+      box-sizing:border-box;
+    }
+    input:focus{box-shadow:0 0 0 4px rgba(11,99,212,0.06); border-color:var(--accent)}
+    .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+    .actions{margin-top:18px;display:flex;gap:10px;align-items:center}
+    button[type="submit"]{
+      background:var(--accent);
+      color:white;
+      border:none;
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    button[disabled]{opacity:0.6;cursor:not-allowed}
+    .muted{font-size:0.9rem;color:var(--muted)}
+    .error{color:var(--danger);font-size:0.9rem;margin-top:6px}
+    .show-pass{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:0.9rem;
+      color:var(--muted);
+      cursor:pointer;
+      user-select:none;
+    }
+    .help{font-size:0.85rem;color:#374151;margin-top:12px}
+    @media (max-width:420px){
+      .card{padding:18px}
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="main" aria-labelledby="loginTitle">
+    <h1 id="loginTitle">Sign In to Your Account</h1>
+    <p class="lead">Enter your username and password to continue.</p>
+
+    <form id="loginForm" novalidate>
+      <div class="field">
+        <label for="username">Username or email</label>
+        <input id="username" name="username" type="text" autocomplete="username"
+               inputmode="email" required minlength="3"
+               aria-describedby="usernameHelp" />
+        <div id="usernameHelp" class="muted">Use your account username or email.</div>
+        <div id="usernameError" class="error" aria-live="polite" hidden></div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div style="display:flex; gap:8px; align-items:center">
+          <input id="password" name="password" type="password" autocomplete="current-password"
+                 required minlength="6" style="flex:1" aria-describedby="passwordHelp" />
+          <button type="button" id="togglePass" aria-pressed="false" title="Show password"
+                  style="background:none;border:1px solid #e5e7eb;padding:8px;border-radius:8px;cursor:pointer">
+            Show
+          </button>
+        </div>
+        <div id="passwordHelp" class="muted">Minimum 6 characters.</div>
+        <div id="passwordError" class="error" aria-live="polite" hidden></div>
+      </div>
+
+      <div class="row">
+        <label class="show-pass"><input type="checkbox" id="remember" name="remember" /> Remember me</label>
+        <a href="#" class="muted" id="forgotLink">Forgot password?</a>
+      </div>
+
+      <div class="actions">
+        <button id="submitBtn" type="submit">Log In</button>
+        <div id="formMessage" class="muted" role="status" aria-live="polite"></div>
+      </div>
+    </form>
+
+    <p class="help">Don't have an account? <a href="https://agamcoffee.github.io/Arhib/">Create one</a></p>
+</main>
+
+  <script>
+    (function(){
+      const form = document.getElementById('loginForm');
+      const username = document.getElementById('username');
+      const password = document.getElementById('password');
+      const submitBtn = document.getElementById('submitBtn');
+      const togglePass = document.getElementById('togglePass');
+      const usernameError = document.getElementById('usernameError');
+      const passwordError = document.getElementById('passwordError');
+      const formMessage = document.getElementById('formMessage');
+
+      // Toggle password visibility
+      togglePass.addEventListener('click', () => {
+        const isHidden = password.type === 'password';
+        password.type = isHidden ? 'text' : 'password';
+        togglePass.textContent = isHidden ? 'Hide' : 'Show';
+        togglePass.setAttribute('aria-pressed', String(isHidden));
+      });
+
+      // Simple validation helpers
+      function clearErrors(){
+        [usernameError, passwordError].forEach(el => { el.hidden = true; el.textContent = ''; });
+        formMessage.textContent = '';
+      }
+      function showFieldError(el, msg){
+        el.textContent = msg;
+        el.hidden = false;
+      }
+
+      // Handle submit
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearErrors();
+
+        // Client-side validation
+        let ok = true;
+        const u = username.value.trim();
+        const p = password.value;
+
+        if (!u || u.length < 3) {
+          showFieldError(usernameError, 'Please enter a valid username or email (min 3 chars).');
+          ok = false;
+        }
+        if (!p || p.length < 6) {
+          showFieldError(passwordError, 'Password must be at least 6 characters.');
+          ok = false;
+        }
+        if (!ok) return;
+
+        // UI feedback
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Signing in…';
+        formMessage.textContent = '';
+
+        try {
+          // Example POST to server - change /login to your endpoint
+          const resp = await fetch('/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+              // Include CSRF token header here if your server requires it
+            },
+            credentials: 'include', // include cookies if your auth relies on them
+            body: JSON.stringify({ username: u, password: p, remember: document.getElementById('remember').checked })
+          });
+
+          if (!resp.ok) {
+            // parse error if available
+            const body = await resp.json().catch(()=>null);
+            const message = body && body.error ? body.error : `Login failed (${resp.status})`;
+            formMessage.textContent = message;
+            formMessage.style.color = '';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Sign in';
+            return;
+          }
+
+          // success - server should return something like { ok:true, redirect: "/dashboard" }
+          const data = await resp.json().catch(()=>({}));
+          formMessage.textContent = 'Signed in successfully. Redirecting…';
+          // redirect if provided by server
+          if (data.redirect) {
+            window.location.href = data.redirect;
+            return;
+          }
+          // otherwise, reload or handle as needed
+          window.location.reload();
+
+        } catch (err) {
+          console.error(err);
+          formMessage.textContent = 'Network error. Please check your connection.';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Sign in';
+        }
+      });
+
+      // Accessibility: show validation message on blur for fields
+      username.addEventListener('blur', () => {
+        if (username.value.trim().length < 3){
+          showFieldError(usernameError, 'Username must be at least 3 characters.');
+        } else {
+          usernameError.hidden = true;
+        }
+      });
+      password.addEventListener('blur', () => {
+        if (password.value.length < 6){
+          showFieldError(passwordError, 'Password must be at least 6 characters.');
+        } else {
+          passwordError.hidden = true;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
+
+
+
