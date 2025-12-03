@@ -64,45 +64,34 @@
   <div class="card">
     <h2>Login</h2>
 
-    <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required>
-      <input type="password" id="password" placeholder="Password" required>
+  <form id="loginForm">
+  <input id="username" type="text" placeholder="Username" />
+  <input id="password" type="password" placeholder="Password" />
+  <button type="submit">Login</button>
+</form>
 
-      <button type="submit">Log In</button>
+<script>
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      <div id="error">Invalid username or password.</div>
-    </form>
-  </div>
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
 
-  <script>
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-
-      try {
-        const res = await fetch("http://localhost:3000/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          // Redirect to GoDaddy site
-          window.location.href = "https://www.arhibuu.com";
-        } else {
-          document.getElementById("error").style.display = "block";
-        }
-      } catch (err) {
-        console.error(err);
-        document.getElementById("error").innerText = "Server unavailable.";
-        document.getElementById("error").style.display = "block";
-      }
+    const resp = await fetch("http://localhost:3000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
     });
-  </script>
 
+    const data = await resp.json();
+
+    if (data.success) {
+        window.location.href = data.redirect; // redirect to arhibuu.com
+    } else {
+        alert(data.message || "Login failed");
+    }
+});
+</script>
 </body>
 </html>
+
